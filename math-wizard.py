@@ -1,7 +1,7 @@
 import os
 import openai
 import streamlit as st
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 import pandas as pd
 import PyPDF2
 from io import StringIO
@@ -9,13 +9,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings.openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 
-# Load OpenAI API key
-load_dotenv(find_dotenv(), override=True)
-api_key = os.getenv("OPENAI_API_KEY")
-
 # Initialize OpenAI client
-client = openai(api_key=st.secrets["OPENAI_API_KEY"])
-client = openai.OpenAI(api_key=api_key)
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # Initialize session state for chat history
 if "chat_history" not in st.session_state:
