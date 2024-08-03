@@ -4,7 +4,6 @@ import streamlit as st
 from dotenv import load_dotenv, find_dotenv
 import pandas as pd
 import PyPDF2
-from docx import Document
 from io import StringIO
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings.openai import OpenAIEmbeddings
@@ -12,9 +11,11 @@ from langchain_community.vectorstores import FAISS
 
 # Load OpenAI API key
 load_dotenv(find_dotenv(), override=True)
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 api_key = os.getenv("OPENAI_API_KEY")
-openai.api_key = api_key
+
+# Initialize OpenAI client
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+client = openai.OpenAI(api_key=api_key)
 
 # Initialize session state for chat history
 if "chat_history" not in st.session_state:
@@ -23,7 +24,7 @@ if "chat_history" not in st.session_state:
 # Display the banner image
 st.image("imagebanner2.png", use_column_width=True)
 
-# Function to load and read multiple files (PDF, DOCX, TXT, XLSX)
+# Function to load and read multiple files (PDF, TXT, XLSX)
 def load_files(uploaded_files):
     all_texts = []
     for uploaded_file in uploaded_files:
@@ -33,10 +34,6 @@ def load_files(uploaded_files):
             for page_num in range(reader.numPages):
                 page = reader.getPage(page_num)
                 text += page.extract_text()
-            all_texts.append(text)
-        elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            doc = Document(uploaded_file)
-            text = "\n".join([para.text for para in doc.paragraphs])
             all_texts.append(text)
         elif uploaded_file.type == "text/plain":
             text = StringIO(uploaded_file.getvalue().decode("utf-8")).read()
@@ -65,7 +62,6 @@ def initialize_faiss_index(chunks):
 # Chat with the assistant using OpenAI API
 def chat_with_assistant(prompt, system_message):
     try:
-        client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
@@ -73,14 +69,15 @@ def chat_with_assistant(prompt, system_message):
                 {"role": "user", "content": prompt},
             ],
         )
-        return response.choices[0].message.content
+        message = response.choices[0].message.content
+        return message
     except Exception as e:
         st.error(f"Error: {e}")
         return None
 
 # Streamlit app logic
 st.title("Math Magic: Your Math Problem Solver")
-uploaded_files = st.file_uploader("Upload files", accept_multiple_files=True, type=['pdf', 'docx', 'txt', 'xlsx'])
+uploaded_files = st.file_uploader("Upload files", accept_multiple_files=True, type=['pdf', 'txt', 'xlsx'])
 
 if uploaded_files:
     texts = load_files(uploaded_files)
